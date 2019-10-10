@@ -1,0 +1,7 @@
+.ipynb_checkpoints
+.vscode
+ENV
+__pycache__/
+nextgenstats/data
+*.ipynb
+.DS_Store
