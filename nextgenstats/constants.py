@@ -14,6 +14,23 @@ GAME_HUMIDITY = 'Humidity' # humidity
 GAME_WIND_SPEED = 'WindSpeed' # wind speed in miles/hour
 GAME_WIND_DIRECTION = 'WindDirection' # wind direction
 
+GAME_CONSTANTS = [
+    GAME_ID,
+    SEASON,
+    HOME_TEAM_ABBR,
+    AWAY_TEAM_ABBR,
+    WEEK,
+    STADIUM,
+    LOCATION,
+    STADIUM_TYPE,
+    TURF_DESCRIPTION,
+    GAME_WEATHER,
+    GAME_TEMPERATURE,
+    GAME_HUMIDITY,
+    GAME_WIND_SPEED,
+    GAME_WIND_DIRECTION,
+]
+
 # Play constants
 PLAY_ID = 'PlayId' # a unique play identifier
 TEAM = 'Team' # home or away
@@ -60,7 +77,7 @@ PLAY_CONSTANTS = [
     YARDS_GAINED,
 ]
 
-# Play positional constants
+# Positional constants
 POSITIONAL_X = 'X' # player position along the long axis of the field. See figure below.
 POSITIONAL_Y = 'Y' # player position along the short axis of the field. See figure below.
 POSITIONAL_SPEED = 'S' # speed in yards/second
@@ -77,7 +94,7 @@ PLAYER_BIRTH_DATE = 'PlayerBirthDate' # birth date (mm/dd/yyyy)
 PLAYER_COLLEGE_NAME = 'PlayerCollegeName' # where the player attended college
 PLAYER_POSITION = 'Position' # player's position
 
-PLAY_POSITIONAL_CONSTANTS = [
+POSITIONAL_CONSTANTS = [
     POSITIONAL_X,
     POSITIONAL_Y,
     POSITIONAL_SPEED,
