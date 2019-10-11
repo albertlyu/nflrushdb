@@ -4,6 +4,7 @@ A module for NFL classes
 '''
 from nextgenstats.constants import GAME_CONSTANTS, PLAY_CONSTANTS, POSITIONAL_CONSTANTS
 from nextgenstats.constants import PLAYER_ID, RUSHER_PLAYER_ID, PLAYER_POSITION, POSITIONAL_X, POSITIONAL_Y
+from nextgenstats.constants import YARD_LINE, POSSESSION_TEAM, FIELD_POSITION, PLAY_DIRECTION
 from nextgenstats.utils import compute_distance
 
 class NgsObject(object):
@@ -86,21 +87,58 @@ class Play(NgsObject):
         Play constructor
         @param {DataFrame} positionals_df
         '''
-        first_positional = positionals_df.iloc[0]
         self.positionals_df = positionals_df
+        first_positional = positionals_df.iloc[0]
+        
+        for constant in PLAY_CONSTANTS:
+            self[constant] = first_positional[constant]
+
+        self.own_territory = self[POSSESSION_TEAM] == self[FIELD_POSITION]
+        self.yards_until_endzone = 100 - self[YARD_LINE] if self.own_territory else self[YARD_LINE]
+
         self.positionals = dict()
         for positional in positionals_df.to_dict('r'):
             player_id = positional[PLAYER_ID]
             if player_id not in self.positionals:
                 self.positionals[player_id] = Positional(positional)
-
-        for constant in PLAY_CONSTANTS:
-            self[constant] = first_positional[constant]
+                self.positionals[player_id].set_adjusted_coordinates(self.own_territory, self[PLAY_DIRECTION])
     
 class Positional(NgsObject):
     '''
     A Positional is an individual Player's positional at a given point of time during a Play
     '''
+    def __get_yards_from_endzone(self, own_territory, play_direction):
+        '''
+        Get the number of yards from the endzone for a positional's coordinate
+        @param {boolean} own_territory - whether the play started in the possession team's territory
+        @param {string}  play_direction - 'left' (towards home endzone) or 'right' (towards away endzone)
+        '''
+        adjusted_x_coordinate = self[POSITIONAL_X] - 20 if own_territory else 120 - self[POSITIONAL_X]
+        if play_direction == 'right':
+            return round(100 - adjusted_x_coordinate, 2)
+        else:
+            return adjusted_x_coordinate
+
+    def __get_yards_from_home_sideline(self, play_direction):
+        '''
+        Get the number of yards from the home sideline, or 'left' sideline along the short axis of the field
+        @param {string} play_direction - 'left' (towards home endzone) or 'right' (towards away endzone)
+        '''
+        if play_direction == 'right':
+            return round(53.3 - self[POSITIONAL_Y], 2)
+        else:
+            return self[POSITIONAL_Y]
+
+    def set_adjusted_coordinates(self, own_territory, play_direction):
+        '''
+        Set the adjusted positional coordinates given play characteristics
+        @param {boolean} own_territory - whether the play started in the possession team's territory
+        @param {string}  play_direction - 'left' (towards home endzone) or 'right' (towards away endzone)
+        '''
+        self.adjusted_positional_x = self.__get_yards_from_endzone(own_territory, play_direction)
+        self.adjusted_positional_y = self.__get_yards_from_home_sideline(play_direction)
+        self.adjusted_coordinates = (self.adjusted_positional_x, self.adjusted_positional_y)
+
     def __init__(self, positional_dict): 
         '''
         Positional constructor

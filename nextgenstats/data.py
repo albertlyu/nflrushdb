@@ -6,12 +6,9 @@ import pandas as pd
 import csv
 
 class NextGenStatsReader(object):
-    def __init__(self): 
-        '''
-        Constructor
-        '''
-        self.ngs_df = pd.DataFrame()
-
+    '''
+    A class for reading and manipulating Next Gen Stats data in a DataFrame
+    '''
     def load_ngs_data_into_dataframe(self, file_path):
         '''
         Load a CSV file of Next Gen Stats data into a DataFrame
@@ -29,17 +26,31 @@ class NextGenStatsReader(object):
         with open(file_path, newline='') as csvfile:
             return csv.DictReader(csvfile)
         
-    def get_player_positionals_for_play(self, play_id):
+    def get_positionals_dataframe_for_play(self, play_id):
         '''
-        Get each player's positions for a play
+        Get each player's positions for a play as a dataframe
+        @param {int} play_id
+        @return {DataFrame}
+        '''
+        return self.ngs_df.loc[self.ngs_df['PlayId'] == int(play_id)]
+        
+    def get_positionals_dict_for_play(self, play_id):
+        '''
+        Get each player's positions for a play as a dictionary
         @param {int} play_id
         @return {dict<dict>} a dict of each player's positional data as a dict, keyed by NflId
         '''
-        play_df = self.ngs_df.loc[self.ngs_df['PlayId'] == int(play_id)]
+        play_positionals_df = self.get_positionals_dataframe_for_play(play_id)
         
-        play_positionals = dict()
-        for index, dict_row in play_df.iterrows():
-            if dict_row['NflId'] not in play_positionals:
-                play_positionals[dict_row['NflId']] = dict_row
+        play_positionals_dict = dict()
+        for index, dict_row in play_positionals_df.iterrows():
+            if dict_row['NflId'] not in play_positionals_dict:
+                play_positionals_dict[dict_row['NflId']] = dict_row
 
-        return play_positionals
+        return play_positionals_dict
+
+    def __init__(self): 
+        '''
+        Constructor
+        '''
+        self.ngs_df = pd.DataFrame()
