@@ -3,7 +3,7 @@
 A module for NFL classes
 '''
 from nextgenstats.constants import GAME_CONSTANTS, PLAY_CONSTANTS, POSITIONAL_CONSTANTS
-from nextgenstats.constants import PLAYER_ID, RUSHER_PLAYER_ID, PLAYER_POSITION, POSITIONAL_X, POSITIONAL_Y
+from nextgenstats.constants import PLAYER_ID, RUSHER_PLAYER_ID, PLAYER_POSITION, POSITIONAL_X, POSITIONAL_Y, POSITIONAL_ORIENTATION, POSITIONAL_ANGLE
 from nextgenstats.constants import YARD_LINE, POSSESSION_TEAM, FIELD_POSITION, PLAY_DIRECTION
 from nextgenstats.utils import compute_distance
 
@@ -94,14 +94,14 @@ class Play(NgsObject):
             self[constant] = first_positional[constant]
 
         self.own_territory = self[POSSESSION_TEAM] == self[FIELD_POSITION]
-        self.yards_until_endzone = 100 - self[YARD_LINE] if self.own_territory else self[YARD_LINE]
+        self.yards_until_endzone = round(100 - self[YARD_LINE], 2) if self.own_territory else self[YARD_LINE]
 
         self.positionals = dict()
         for positional in positionals_df.to_dict('r'):
             player_id = positional[PLAYER_ID]
             if player_id not in self.positionals:
                 self.positionals[player_id] = Positional(positional)
-                self.positionals[player_id].set_adjusted_coordinates(self.own_territory, self[PLAY_DIRECTION])
+                self.positionals[player_id].set_adjusted_fields(self.own_territory, self[PLAY_DIRECTION])
     
 class Positional(NgsObject):
     '''
@@ -114,7 +114,7 @@ class Positional(NgsObject):
         @param {string}  play_direction - 'left' (towards home endzone) or 'right' (towards away endzone)
         '''
         adjusted_x_coordinate = self[POSITIONAL_X] - 20 if own_territory else 120 - self[POSITIONAL_X]
-        if play_direction == 'right':
+        if play_direction == 'left':
             return round(100 - adjusted_x_coordinate, 2)
         else:
             return adjusted_x_coordinate
@@ -124,12 +124,12 @@ class Positional(NgsObject):
         Get the number of yards from the home sideline, or 'left' sideline along the short axis of the field
         @param {string} play_direction - 'left' (towards home endzone) or 'right' (towards away endzone)
         '''
-        if play_direction == 'right':
+        if play_direction == 'left':
             return round(53.3 - self[POSITIONAL_Y], 2)
         else:
             return self[POSITIONAL_Y]
 
-    def set_adjusted_coordinates(self, own_territory, play_direction):
+    def __set_adjusted_coordinates(self, own_territory, play_direction):
         '''
         Set the adjusted positional coordinates given play characteristics
         @param {boolean} own_territory - whether the play started in the possession team's territory
@@ -138,6 +138,27 @@ class Positional(NgsObject):
         self.adjusted_positional_x = self.__get_yards_from_endzone(own_territory, play_direction)
         self.adjusted_positional_y = self.__get_yards_from_home_sideline(play_direction)
         self.adjusted_coordinates = (self.adjusted_positional_x, self.adjusted_positional_y)
+
+    def __set_adjusted_angles(self, play_direction):
+        '''
+        Set the adjusted orientation of player and angle of player motion given the play direction
+        @param {string} play_direction - 'left' (towards home endzone) or 'right' (towards away endzone)
+        '''
+        if play_direction == 'left':
+            self.adjusted_orientation = round(180 - self[POSITIONAL_ORIENTATION], 2)
+            self.adjusted_angle = round(180 - self[POSITIONAL_ANGLE], 2)
+        else:
+            self.adjusted_orientation = self[POSITIONAL_ORIENTATION]
+            self.adjusted_angle = self[POSITIONAL_ANGLE]
+
+    def set_adjusted_fields(self, own_territory, play_direction):
+        '''
+        Set the adjusted fields given play characteristics
+        @param {boolean} own_territory - whether the play started in the possession team's territory
+        @param {string}  play_direction - 'left' (towards home endzone) or 'right' (towards away endzone)
+        '''
+        self.__set_adjusted_coordinates(own_territory, play_direction)
+        self.__set_adjusted_angles(play_direction)
 
     def __init__(self, positional_dict): 
         '''
